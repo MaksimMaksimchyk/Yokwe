@@ -4,6 +4,7 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
     id("com.google.gms.google-services")
+    kotlin("plugin.serialization") version "2.1.10"
 }
 
 android {
@@ -61,6 +62,7 @@ dependencies {
     //Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
     //Navigation
     implementation(libs.androidx.navigation.compose)
     //Firebase
@@ -68,5 +70,11 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
     implementation(libs.play.services.auth)
+    // kotlinx.serialization
+    implementation(libs.kotlinx.serialization.json)
+    // Retrofit
+    implementation(libs.retrofit)
+    // Официальный конвертер от Square
+    implementation(libs.converter.kotlinx.serialization)
 
 }
