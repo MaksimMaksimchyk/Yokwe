@@ -1,5 +1,6 @@
 package com.example.yokwe.ui.auth
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +17,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
@@ -28,20 +30,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun CreateFamilyScreen(
     modifier: Modifier = Modifier,
-    viewModel: CreateFamilyViewModel = hiltViewModel(),
-    onFamilyCreated: () -> Unit
+    viewModel: CreateFamilyViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val clipboard = LocalClipboardManager.current
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         //Экран для регистрации
         if (state.inviteCode == null) {
-            Text("Создать семью", style = MaterialTheme.typography.headlineMedium)
+            Text("Новая семья", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(32.dp))
             OutlinedTextField(
                 value = state.email,
@@ -73,52 +75,20 @@ fun CreateFamilyScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Зарегестрироваться")
+                    Text("Зарегистрироваться")
                 }
             }
-        }
-
-        //Экран когда есть ошибка
-        if (state.error != null) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = state.error!!, color = MaterialTheme.colorScheme.onError)
-
-        } else {
-            //Экран когда получен код приглашения без ошибки
-            Text(text = "Семья создана!", style = MaterialTheme.typography.headlineMedium)
-            Spacer(modifier = Modifier.height(32.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
+            if (!state.error.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = state.inviteCode ?: "",
-                    style = MaterialTheme.typography.displaySmall,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    textAlign = TextAlign.Center
+                    text = state.error!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = {
-                    clipboard.setText(AnnotatedString(state.inviteCode!!))
-                    viewModel.handleIntent(CreateFamilyIntent.CopyInviteCode)
-                }, modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Копировать код")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    viewModel.handleIntent(CreateFamilyIntent.Done)
-                    // Тут будет какая-то логика когда создаётся семья, например перекидывание на главную onFamilyCreated()
-                }, modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Готово")
-            }
         }
+
     }
 }

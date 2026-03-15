@@ -30,9 +30,6 @@ class CreateFamilyViewModel @Inject constructor(private val authRepository: Auth
             CreateFamilyIntent.Submit -> {
                 submit()
             }
-
-            is CreateFamilyIntent.Done -> {}
-            CreateFamilyIntent.CopyInviteCode -> {}
         }
     }
 

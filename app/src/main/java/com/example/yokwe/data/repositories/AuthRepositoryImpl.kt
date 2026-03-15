@@ -14,6 +14,10 @@ class AuthRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : AuthRepository {
 
+    companion object {
+        const val MAX_FAMILY_SIZE = 2
+    }
+
     override suspend fun createFamily(
         email: String,
         password: String
@@ -32,15 +36,47 @@ class AuthRepositoryImpl @Inject constructor(
             FamilyDTO(id = familyRef.id, members = listOf(newUserId), inviteCode = inviteCode)
         familyRef.set(newFamily).await()
 
-        //Создание питомца
-        val newPet = PetDTO(familyId = familyRef.id)
-        firestore.collection("pets").document(familyRef.id).set(newPet).await()
-
         //Добавление юзера в коллекцию
         val newUser = UserDTO(id = newUserId, email = email, familyId = familyRef.id)
         firestore.collection("users").document(newUserId).set(newUser).await()
 
 
+        //Создание питомца
+        val newPet = PetDTO(familyId = familyRef.id)
+        firestore.collection("pets").document(familyRef.id).set(newPet).await()
+
         return inviteCode
+    }
+
+    override suspend fun joinToFamily(
+        email: String,
+        password: String,
+        inviteCode: String
+    ): String {
+        //Создание нового пользователя
+        val authResult = auth.createUserWithEmailAndPassword(email, password).await()
+        val newUserId = authResult.user?.uid ?: ("Error")
+
+        //Поиск семьи по коду:
+        val searchFamilyQuery = firestore.collection("families")
+            .whereEqualTo("inviteCode", inviteCode).get().await()
+
+        val familyDoc =
+            searchFamilyQuery.documents.firstOrNull() ?: throw Exception("Семья не найдена")
+
+        val family = familyDoc.toObject(FamilyDTO::class.java)?.copy(id = familyDoc.id)
+            ?: throw Exception("Ошибка чтения данных о семье из БД")
+        if (family.members.size >= MAX_FAMILY_SIZE) throw Exception("В семье уже есть 2 участника")
+
+        //Добавление юзера в коллекцию
+        val newUser = UserDTO(id = newUserId, email = email, familyId = family.id)
+        firestore.collection("users").document(newUserId).set(newUser).await()
+
+        //Добавление юзера в семью
+        val updatedMembers = family.members + newUserId
+        firestore.collection("families").document(family.id).update("members", updatedMembers)
+            .await()
+
+        return family.id
     }
 }
