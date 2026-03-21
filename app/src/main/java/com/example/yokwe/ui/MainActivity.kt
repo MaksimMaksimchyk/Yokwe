@@ -6,11 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
@@ -23,7 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.yokwe.ui.auth.AuthNavGraph
 import com.example.yokwe.ui.auth.AuthState
 import com.example.yokwe.ui.auth.AuthViewModel
-import com.example.yokwe.ui.home.HomeScreen
+import com.example.yokwe.ui.home.HomeNavGraph
 import com.example.yokwe.ui.theme.YokweTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -51,28 +48,24 @@ class MainActivity : ComponentActivity() {
 
                     }
 
-                    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(paddingValues)
-                        ) {
-                            when (val state = authState) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        when (val state = authState) {
 
-                                is AuthState.Loading -> CircularProgressIndicator(
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
+                            is AuthState.Loading -> CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.Center)
+                            )
 
-                                is AuthState.Authenticated -> {
-                                    HomeScreen(familyId = state.familyId)
-                                }
+                            is AuthState.Authenticated -> {
+                                HomeNavGraph(familyId = state.familyId)
+                            }
 
-                                AuthState.NotAuthenticated -> {
-                                    AuthNavGraph(modifier = Modifier.fillMaxSize())
-                                }
+                            AuthState.NotAuthenticated -> {
+                                AuthNavGraph(modifier = Modifier.fillMaxSize())
                             }
                         }
-
                     }
                 }
             }

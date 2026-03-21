@@ -11,6 +11,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,7 +22,8 @@ import androidx.compose.ui.unit.dp
 fun AuthSelectionScreen(
     modifier: Modifier = Modifier,
     onCreateFamilyClick: () -> Unit,
-    onJoinFamilyClick: () -> Unit
+    onJoinFamilyClick: () -> Unit,
+    onSignInClick: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -51,6 +53,11 @@ fun AuthSelectionScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Присоединиться к семье")
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(onClick = onSignInClick, modifier = Modifier.fillMaxWidth()) {
+            Text("Уже есть аккаунт? Войти")
         }
     }
 }

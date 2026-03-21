@@ -8,4 +8,8 @@ data class Pet(
     var lastMessage: String
 )
 
-
+enum class PetMood {
+    HAPPY,
+    NEUTRAL,
+    SAD
+}

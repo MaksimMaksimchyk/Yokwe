@@ -24,6 +24,9 @@ fun AuthNavGraph(
                 },
                 onJoinFamilyClick = {
                     navController.navigate(AuthRoutes.JoinToFamily.route)
+                },
+                onSignInClick = {
+                    navController.navigate(AuthRoutes.SignIn.route)
                 }
             )
         }
@@ -35,6 +38,10 @@ fun AuthNavGraph(
         composable(AuthRoutes.JoinToFamily.route) {
             JoinToFamilyScreen()
         }
+
+        composable(AuthRoutes.SignIn.route) {
+            SignInScreen()
+        }
     }
 }
 
@@ -42,4 +49,5 @@ sealed class AuthRoutes(val route: String) {
     object SelectAuth : AuthRoutes("auth_selection")
     object CreateFamily : AuthRoutes("create_family")
     object JoinToFamily : AuthRoutes("join_family")
+    object SignIn : AuthRoutes("sign_in")
 }

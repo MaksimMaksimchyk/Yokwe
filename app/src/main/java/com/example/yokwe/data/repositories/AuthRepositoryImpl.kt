@@ -79,4 +79,13 @@ class AuthRepositoryImpl @Inject constructor(
 
         return family.id
     }
+
+    override suspend fun signIn(email: String, password: String): String {
+        val authResult = auth.signInWithEmailAndPassword(email, password).await()
+        val userId = authResult.user?.uid ?: ("Error")
+        val userDoc = firestore.collection("users").document(userId).get().await()
+        val familyId = userDoc.getString("familyId") ?: error("")
+
+        return familyId
+    }
 }

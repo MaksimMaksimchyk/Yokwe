@@ -76,5 +76,7 @@ dependencies {
     implementation(libs.retrofit)
     // Официальный конвертер от Square
     implementation(libs.converter.kotlinx.serialization)
+    //Иконки
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
 
 }
