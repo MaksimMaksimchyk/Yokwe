@@ -14,5 +14,5 @@ data class GoalDTO(
     val currentAmount: Double = 0.0,
     val currency: String = "USD",
     val completedDates: List<Long> = emptyList(),
-    val isDone: Boolean = false
+    val done: Boolean = false
 )

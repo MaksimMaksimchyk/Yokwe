@@ -23,6 +23,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "OPENROUTER_API_KEY", "\"${project.properties["OPENROUTER_API_KEY"]}\"")
     }
 
     buildTypes {
@@ -40,7 +42,9 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
+
 }
 
 dependencies {
@@ -74,9 +78,10 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     // Retrofit
     implementation(libs.retrofit)
+    implementation(libs.logging.interceptor)
     // Официальный конвертер от Square
     implementation(libs.converter.kotlinx.serialization)
     //Иконки
-    implementation("androidx.compose.material:material-icons-extended:1.7.8")
+    implementation(libs.androidx.compose.material.icons.extended)
 
 }

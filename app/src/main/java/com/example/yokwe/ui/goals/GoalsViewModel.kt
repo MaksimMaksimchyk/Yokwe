@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.yokwe.domain.models.Goal
 import com.example.yokwe.domain.models.GoalStatus
+import com.example.yokwe.domain.models.PetEvent
+import com.example.yokwe.domain.repositories.AiRepository
 import com.example.yokwe.domain.repositories.GoalRepository
 import com.example.yokwe.domain.repositories.PetRepository
+import com.example.yokwe.ui.pet.PetViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,7 +30,8 @@ class GoalsViewModel @Inject constructor(
     private val goalRepository: GoalRepository,
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
-    private val petRepository: PetRepository
+    private val petRepository: PetRepository,
+    private val aiRepository: AiRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(GoalsState())
     val state = _state.asStateFlow()
@@ -133,8 +137,28 @@ class GoalsViewModel @Inject constructor(
             if (isCompleted) {
                 familyId?.let { id ->
                     val expAmount = when (goal) {
-                        is Goal.DailyHabitGoal -> HABIT_EXP_GAIN
-                        is Goal.OneTimeGoal -> ONE_TIME_GOAL_EXP_GAIN
+                        is Goal.DailyHabitGoal -> {
+                            val message = aiRepository.generatePetMessage(
+                                event = PetEvent.HABIT_COMPLETED,
+                                petLevel = getCurrentPetLevel(), // нужно получить уровень
+                                taskName = goal.title
+                            )
+                            petRepository.updateLastMessage(id, message)
+
+                            HABIT_EXP_GAIN
+                        }
+
+                        is Goal.OneTimeGoal -> {
+                            val message = aiRepository.generatePetMessage(
+                                event = PetEvent.TASK_COMPLETED,
+                                petLevel = getCurrentPetLevel(),
+                                taskName = goal.title
+                            )
+                            petRepository.updateLastMessage(id, message)
+
+                            ONE_TIME_GOAL_EXP_GAIN
+                        }
+
                         else -> 0
                     }
                     if (expAmount > 0) {
@@ -146,7 +170,6 @@ class GoalsViewModel @Inject constructor(
             _state.update { state ->
                 state.copy(goals = state.goals.map { if (it.id == goalId) updatedGoal else it })
             }
-
 
         }
     }
@@ -167,7 +190,11 @@ class GoalsViewModel @Inject constructor(
 
             // Добавляем опыт питомцу
             familyId?.let { id ->
-                val expAmount = if (wasCompleted) { COMPLETE_FINANCE_GOAL_EXP_GAIN } else { ADD_PROGRESS_FINANCE_GOAL_EXP_GAIN }
+                val expAmount = if (wasCompleted) {
+                    COMPLETE_FINANCE_GOAL_EXP_GAIN
+                } else {
+                    ADD_PROGRESS_FINANCE_GOAL_EXP_GAIN
+                }
                 petRepository.addExperience(id, expAmount)
             }
 
@@ -188,6 +215,12 @@ class GoalsViewModel @Inject constructor(
         val cal2 = Calendar.getInstance().apply { time = date2 }
         return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
                 cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    }
+
+    private suspend fun getCurrentPetLevel(): Int {
+        val familyId = familyId ?: return 1
+        val petDoc = firestore.collection("pets").document(familyId).get().await()
+        return petDoc.getLong("level")?.toInt() ?: 1
     }
 
     companion object {

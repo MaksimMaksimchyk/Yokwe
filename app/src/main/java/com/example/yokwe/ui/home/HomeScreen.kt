@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -80,7 +81,8 @@ fun HomeScreen(
         } else if (petState.pet != null) {
             PetCard(
                 pet = petState.pet!!,
-                stats = homeState.goalStats
+                stats = homeState.goalStats,
+                isThinking = petState.isThinking
             )
         }
 
@@ -132,7 +134,8 @@ fun HomeScreen(
 @Composable
 fun PetCard(
     pet: Pet,
-    stats: GoalStats
+    stats: GoalStats,
+    isThinking: Boolean
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -194,7 +197,7 @@ fun PetCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Облачко с последним сообщением
+            // Облачко с сообщением
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -204,51 +207,26 @@ fun PetCard(
                     )
                     .padding(12.dp)
             ) {
-                Text(
-                    text = "💬 ${pet.lastMessage}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Статистика целей
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(12.dp)
-                ) {
-                    Text(
-                        text = "📊 Статистика целей",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
+                if (isThinking) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        StatItem(
-                            value = stats.total.toString(),
-                            label = "Всего"
-                        )
-                        StatItem(
-                            value = stats.active.toString(),
-                            label = "Активно"
-                        )
-                        StatItem(
-                            value = stats.completed.toString(),
-                            label = "Выполнено"
+                        Text("💭", fontSize = 20.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Питомец думает...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                } else {
+                    Text(
+                        text = "💬 ${pet.lastMessage}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }

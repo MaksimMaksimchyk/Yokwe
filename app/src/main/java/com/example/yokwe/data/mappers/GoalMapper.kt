@@ -37,7 +37,7 @@ fun GoalDTO.toDomain(): Goal {
             createdAt = createdAt.toDate(),
             status = GoalStatus.valueOf(status),
             title = title,
-            isDone = isDone
+            isDone = done
         )
 
         else -> throw IllegalArgumentException("Неизвестный тип цели: $type")
@@ -77,7 +77,7 @@ fun Goal.toDto(): GoalDTO {
             status = status.name,
             type = "one_time",
             title = title,
-            isDone = isDone
+            done = isDone
         )
     }
 }

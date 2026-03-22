@@ -13,9 +13,3 @@ data class Pet(
     val progressToNextLevel: Float
         get() = experience.toFloat() / maxExperience
 }
-
-enum class PetMood {
-    HAPPY,
-    NEUTRAL,
-    SAD
-}

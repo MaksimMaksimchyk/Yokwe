@@ -1,8 +1,10 @@
 package com.example.yokwe.hilt
 
+import com.example.yokwe.data.repositories.AiRepositoryImpl
 import com.example.yokwe.data.repositories.AuthRepositoryImpl
 import com.example.yokwe.data.repositories.GoalRepositoryImpl
 import com.example.yokwe.data.repositories.PetRepositoryImpl
+import com.example.yokwe.domain.repositories.AiRepository
 import com.example.yokwe.domain.repositories.AuthRepository
 import com.example.yokwe.domain.repositories.GoalRepository
 import com.example.yokwe.domain.repositories.PetRepository
@@ -26,5 +28,9 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPetRepository(petRepositoryImpl: PetRepositoryImpl): PetRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAiRepository(AiRepositoryImpl: AiRepositoryImpl): AiRepository
 
 }
