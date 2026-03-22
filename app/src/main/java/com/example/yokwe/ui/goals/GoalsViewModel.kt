@@ -5,10 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.yokwe.domain.models.Goal
 import com.example.yokwe.domain.models.GoalStatus
 import com.example.yokwe.domain.repositories.GoalRepository
+import com.example.yokwe.domain.repositories.PetRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
@@ -24,10 +26,14 @@ import javax.inject.Inject
 class GoalsViewModel @Inject constructor(
     private val goalRepository: GoalRepository,
     private val auth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val petRepository: PetRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(GoalsState())
     val state = _state.asStateFlow()
+
+    private val _dialogState = MutableStateFlow<DialogState?>(null)
+    val dialogState: StateFlow<DialogState?> = _dialogState.asStateFlow()
 
     private var familyId: String? = null
 
@@ -70,17 +76,38 @@ class GoalsViewModel @Inject constructor(
             is GoalsIntent.ToggleGoal -> toggleGoal(intent.goalId, intent.isCompleted)
             is GoalsIntent.AddProgress -> addProgress(intent.goalId, intent.amount)
             is GoalsIntent.DeleteGoal -> deleteGoal(intent.goalId)
+            is GoalsIntent.ShowAddProgressDialog -> showAddProgressDialog(intent.goalId)
+            GoalsIntent.HideAddProgressDialog -> hideAddProgressDialog()
         }
+    }
+
+    private fun showAddProgressDialog(goalId: String) {
+        val goal = _state.value.goals.find { it.id == goalId } as? Goal.FinancialGoal
+        if (goal != null) {
+            _dialogState.update {
+                DialogState(
+                    goalId = goalId,
+                    goalTitle = goal.title,
+                    currentAmount = goal.currentAmount,
+                    targetAmount = goal.targetAmount,
+                    currency = goal.currency
+                )
+            }
+        }
+    }
+
+    private fun hideAddProgressDialog() {
+        _dialogState.update { null }
     }
 
     private fun toggleGoal(goalId: String, isCompleted: Boolean) {
         viewModelScope.launch {
             val goal = _state.value.goals.find { it.id == goalId } ?: return@launch
             val updatedGoal = when (goal) {
-                is Goal.OneTimeGoal -> goal.copy(
-                    isDone = isCompleted,
-                    status = if (isCompleted) GoalStatus.COMPLETED else GoalStatus.ACTIVE
-                )
+                is Goal.OneTimeGoal -> {
+                    val newStatus = if (isCompleted) GoalStatus.COMPLETED else GoalStatus.ACTIVE
+                    goal.copy(isDone = isCompleted, status = newStatus)
+                }
 
                 is Goal.DailyHabitGoal -> {
                     val today = Date()
@@ -101,9 +128,26 @@ class GoalsViewModel @Inject constructor(
                 else -> return@launch // финансовые цели обрабатываются отдельно
             }
             goalRepository.updateGoal(updatedGoal)
+
+            // Добавляем опыт питомцу
+            if (isCompleted) {
+                familyId?.let { id ->
+                    val expAmount = when (goal) {
+                        is Goal.DailyHabitGoal -> HABIT_EXP_GAIN
+                        is Goal.OneTimeGoal -> ONE_TIME_GOAL_EXP_GAIN
+                        else -> 0
+                    }
+                    if (expAmount > 0) {
+                        petRepository.addExperience(id, expAmount)
+                    }
+                }
+            }
+
             _state.update { state ->
                 state.copy(goals = state.goals.map { if (it.id == goalId) updatedGoal else it })
             }
+
+
         }
     }
 
@@ -112,11 +156,21 @@ class GoalsViewModel @Inject constructor(
             val goal =
                 _state.value.goals.find { it.id == goalId } as? Goal.FinancialGoal ?: return@launch
             val newCurrent = goal.currentAmount + amount
+            val wasCompleted = newCurrent >= goal.targetAmount
+            val newStatus =
+                if (newCurrent >= goal.targetAmount) GoalStatus.COMPLETED else GoalStatus.ACTIVE
             val updatedGoal = goal.copy(
                 currentAmount = newCurrent,
-                status = if (newCurrent >= goal.targetAmount) GoalStatus.COMPLETED else GoalStatus.ACTIVE
+                status = newStatus
             )
             goalRepository.updateGoal(updatedGoal)
+
+            // Добавляем опыт питомцу
+            familyId?.let { id ->
+                val expAmount = if (wasCompleted) { COMPLETE_FINANCE_GOAL_EXP_GAIN } else { ADD_PROGRESS_FINANCE_GOAL_EXP_GAIN }
+                petRepository.addExperience(id, expAmount)
+            }
+
             _state.update { state ->
                 state.copy(goals = state.goals.map { if (it.id == goalId) updatedGoal else it })
             }
@@ -134,5 +188,12 @@ class GoalsViewModel @Inject constructor(
         val cal2 = Calendar.getInstance().apply { time = date2 }
         return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
                 cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    }
+
+    companion object {
+        const val HABIT_EXP_GAIN = 10
+        const val ONE_TIME_GOAL_EXP_GAIN = 15
+        const val COMPLETE_FINANCE_GOAL_EXP_GAIN = 50
+        const val ADD_PROGRESS_FINANCE_GOAL_EXP_GAIN = 5
     }
 }

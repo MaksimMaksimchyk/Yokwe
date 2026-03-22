@@ -6,5 +6,5 @@ data class PetDTO(
     var level: Int = 1,
     var experience: Int = 0,
     var mood: String = "neutral",
-    var lastMessage: String = ""
+    var lastMessage: String = "Привет! Я ваш общий питомец!"
 )

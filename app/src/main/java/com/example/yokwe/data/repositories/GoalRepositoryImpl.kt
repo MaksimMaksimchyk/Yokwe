@@ -5,6 +5,7 @@ import com.example.yokwe.data.mappers.toDomain
 import com.example.yokwe.data.mappers.toDto
 import com.example.yokwe.domain.models.Goal
 import com.example.yokwe.domain.repositories.GoalRepository
+import com.example.yokwe.ui.goals.GoalStats
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -45,6 +46,28 @@ class GoalRepositoryImpl @Inject constructor(
                     doc.toObject(GoalDTO::class.java)?.toDomain()
                 } ?: emptyList()
                 trySend(goals)
+            }
+        awaitClose { snapshotListener.remove() }
+    }
+
+    override fun observeGoalStats(familyId: String): Flow<GoalStats> = callbackFlow {
+        val snapshotListener = firestore.collection("goals")
+            .whereEqualTo("familyId", familyId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+
+                val goals = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(GoalDTO::class.java)
+                } ?: emptyList()
+
+                val total = goals.size
+                val active = goals.count { it.status == "ACTIVE" }
+                val completed = goals.count { it.status == "COMPLETED" }
+
+                trySend(GoalStats(total, active, completed))
             }
         awaitClose { snapshotListener.remove() }
     }

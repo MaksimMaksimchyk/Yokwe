@@ -2,11 +2,17 @@ package com.example.yokwe.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.yokwe.data.dto.GoalDTO
+import com.example.yokwe.domain.repositories.GoalRepository
+import com.example.yokwe.ui.goals.GoalStats
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -14,7 +20,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val goalRepository: GoalRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeScreenState())
     val state: StateFlow<HomeScreenState> = _state.asStateFlow()
@@ -38,6 +45,17 @@ class HomeViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun observeGoalStats(familyId: String) {
+        goalRepository.observeGoalStats(familyId)
+            .catch { e ->
+                _state.update { it.copy(error = e.message) }
+            }
+            .onEach { stats ->
+                _state.update { it.copy(goalStats = stats) }
+            }
+            .launchIn(viewModelScope)
     }
 
 }

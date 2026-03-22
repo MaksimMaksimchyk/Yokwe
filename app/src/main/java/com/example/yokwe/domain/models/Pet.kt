@@ -5,8 +5,14 @@ data class Pet(
     var level: Int,
     var experience: Int,
     var mood: PetMood,
-    var lastMessage: String
-)
+    var lastMessage: String = "Привет! Я ваш общий питомец!"
+) {
+    val maxExperience: Int
+        get() = 100 * level
+
+    val progressToNextLevel: Float
+        get() = experience.toFloat() / maxExperience
+}
 
 enum class PetMood {
     HAPPY,

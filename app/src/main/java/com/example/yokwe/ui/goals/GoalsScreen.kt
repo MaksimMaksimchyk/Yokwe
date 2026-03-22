@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -18,25 +20,25 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.yokwe.domain.models.Goal
+import com.example.yokwe.domain.models.GoalStatus
 import java.util.Calendar
 import java.util.Date
 
@@ -47,8 +49,28 @@ fun GoalsScreen(
     onAddGoalClick: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
+
+    val activeGoals = state.goals.filter { it.status == GoalStatus.ACTIVE }
+    val completedGoals = state.goals.filter { it.status == GoalStatus.COMPLETED }
 
     Box(modifier = modifier.fillMaxSize()) {
+        // Отображение диалога для финансовой цели
+        dialogState?.let { dialog ->
+            AddProgressDialog(
+                goalTitle = dialog.goalTitle,
+                currentAmount = dialog.currentAmount,
+                targetAmount = dialog.targetAmount,
+                currency = dialog.currency,
+                onDismiss = { viewModel.handleIntent(GoalsIntent.HideAddProgressDialog) },
+                onConfirm = { amount ->
+                    viewModel.handleIntent(GoalsIntent.AddProgress(dialog.goalId, amount))
+                    viewModel.handleIntent(GoalsIntent.HideAddProgressDialog)
+                }
+            )
+        }
+
+        //Основной контент
         if (state.isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         } else if (state.error != null) {
@@ -62,38 +84,105 @@ fun GoalsScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(state.goals) { goal ->
-                    GoalCard(
-                        goal = goal,
-                        onToggle = { isCompleted ->
-                            when (goal) {
-                                is Goal.OneTimeGoal -> viewModel.handleIntent(
-                                    GoalsIntent.ToggleGoal(
-                                        goal.id,
-                                        isCompleted
+                //Секция активных задач
+                if (activeGoals.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Активные", style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+                        )
+                    }
+                    items(activeGoals) { goal ->
+                        GoalCard(
+                            goal = goal,
+                            onToggle = { isCompleted ->
+                                when (goal) {
+                                    is Goal.OneTimeGoal -> viewModel.handleIntent(
+                                        GoalsIntent.ToggleGoal(
+                                            goal.id,
+                                            isCompleted
+                                        )
                                     )
-                                )
 
-                                is Goal.DailyHabitGoal -> viewModel.handleIntent(
-                                    GoalsIntent.ToggleGoal(
-                                        goal.id,
-                                        true
+                                    is Goal.DailyHabitGoal -> viewModel.handleIntent(
+                                        GoalsIntent.ToggleGoal(goal.id, true)
                                     )
-                                )
 
-                                else -> {}
+                                    else -> {}
+                                }
+                            },
+                            onAddProgress = {
+                                if (goal is Goal.FinancialGoal) {
+                                    viewModel.handleIntent(GoalsIntent.ShowAddProgressDialog(goal.id))
+                                }
+                            },
+                            onDelete = {
+                                viewModel.handleIntent(GoalsIntent.DeleteGoal(goal.id))
                             }
-                        },
-                        onAddProgress = { amount ->
-                            if (goal is Goal.FinancialGoal) {
-                                viewModel.handleIntent(GoalsIntent.AddProgress(goal.id, amount))
-                            }
-                        },
-                        onDelete = {
-                            viewModel.handleIntent(GoalsIntent.DeleteGoal(goal.id))
-                        }
-                    )
+                        )
+                    }
                 }
+
+                // Секция "Завершённые" (только если есть завершённые цели)
+                if (completedGoals.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Завершённые",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                        )
+                    }
+                    items(completedGoals) { goal ->
+                        GoalCard(
+                            goal = goal,
+                            onToggle = { isCompleted ->
+                                when (goal) {
+                                    is Goal.OneTimeGoal -> viewModel.handleIntent(
+                                        GoalsIntent.ToggleGoal(
+                                            goal.id,
+                                            isCompleted
+                                        )
+                                    )
+
+                                    is Goal.DailyHabitGoal -> viewModel.handleIntent(
+                                        GoalsIntent.ToggleGoal(
+                                            goal.id,
+                                            true
+                                        )
+                                    )
+
+                                    else -> {}
+                                }
+                            },
+                            onAddProgress = {
+                                if (goal is Goal.FinancialGoal) {
+                                    viewModel.handleIntent(GoalsIntent.ShowAddProgressDialog(goal.id))
+                                }
+                            },
+                            onDelete = {
+                                viewModel.handleIntent(GoalsIntent.DeleteGoal(goal.id))
+                            }
+                        )
+                    }
+                }
+
+                //Сообщение при пустом списке
+                if (state.goals.isEmpty()) {
+                    item {
+                        Text(
+                            text = "У вас пока нет целей. Нажмите +, чтобы добавить",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
             }
         }
 
@@ -112,89 +201,229 @@ fun GoalsScreen(
 fun GoalCard(
     goal: Goal,
     onToggle: (Boolean) -> Unit,
-    onAddProgress: (Double) -> Unit,
+    onAddProgress: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val isCompleted = goal.status == GoalStatus.COMPLETED
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isCompleted)
+                MaterialTheme.colorScheme.surfaceVariant
+            else
+                MaterialTheme.colorScheme.surface
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(all = 16.dp)) {
             when (goal) {
-                is Goal.FinancialGoal -> FinancialGoalCard(goal, onAddProgress)
-                is Goal.DailyHabitGoal -> DailyHabitGoalCard(goal, onToggle)
-                is Goal.OneTimeGoal -> OneTimeGoalCard(goal, onToggle)
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Удалить")
+                is Goal.FinancialGoal -> FinancialGoalCard(
+                    goal = goal,
+                    onAddProgress = onAddProgress,
+                    isCompleted = isCompleted
+                )
+
+                is Goal.DailyHabitGoal -> DailyHabitGoalCard(
+                    goal = goal,
+                    onToggle = onToggle,
+                    isCompleted = isCompleted
+                )
+
+                is Goal.OneTimeGoal -> OneTimeGoalCard(
+                    goal = goal,
+                    onToggle = onToggle,
+                    isCompleted = isCompleted
+                )
             }
         }
-    }
-}
 
-@Composable
-fun FinancialGoalCard(goal: Goal.FinancialGoal, onAddProgress: (Double) -> Unit) {
-    val progress = (goal.currentAmount / goal.targetAmount).coerceIn(0.0, 1.0)
-    Column {
-        Text(goal.title, style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        LinearProgressIndicator(
-            progress = { progress.toFloat() },
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            color = ProgressIndicatorDefaults.linearColor,
-            trackColor = ProgressIndicatorDefaults.linearTrackColor,
-            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text("${goal.currentAmount} / ${goal.targetAmount} ${goal.currency}")
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            label = { Text("Сумма") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Button(
-            onClick = { /* нужно реализовать ввод суммы */ },
-            modifier = Modifier.fillMaxWidth()
+            horizontalArrangement = Arrangement.Center
         ) {
-            Text("Добавить")
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Удалить",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }
 
 @Composable
-fun DailyHabitGoalCard(goal: Goal.DailyHabitGoal, onToggle: (Boolean) -> Unit) {
+fun FinancialGoalCard(
+    goal: Goal.FinancialGoal,
+    onAddProgress: () -> Unit,
+    isCompleted: Boolean
+) {
+    val progress = (goal.currentAmount / goal.targetAmount).coerceIn(0.0, 1.0)
+    val progressPercent = (progress * 100).toInt()
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Круговая диаграмма
+            Box(
+                modifier = Modifier.size(70.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    progress = { progress.toFloat() },
+                    modifier = Modifier.fillMaxSize(),
+                    color = if (isCompleted)
+                        MaterialTheme.colorScheme.secondary
+                    else
+                        MaterialTheme.colorScheme.primary,
+                    strokeWidth = 6.dp,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
+                )
+                Text(
+                    text = "$progressPercent%",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Информация
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = goal.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    textDecoration = if (isCompleted) TextDecoration.LineThrough else null
+                )
+                Text(
+                    text = "${goal.currentAmount} / ${goal.targetAmount} ${goal.currency}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+
+        if (!isCompleted) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onAddProgress,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Добавить сумму")
+            }
+        }
+    }
+}
+
+@Composable
+fun DailyHabitGoalCard(
+    goal: Goal.DailyHabitGoal,
+    onToggle: (Boolean) -> Unit,
+    isCompleted: Boolean
+) {
     val today = Date()
     val isDoneToday = goal.completedDates.any { isSameDay(it, today) }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    val habitProgress = (goal.completedDates.size.toFloat() / 30f).coerceIn(0f, 1f) // цель 30 дней
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column {
-            Text(goal.title, style = MaterialTheme.typography.titleMedium)
-            Text("Привычка", style = MaterialTheme.typography.bodySmall)
-        }
-        Button(onClick = { onToggle(!isDoneToday) }) {
-            Text(if (isDoneToday) "Отметить" else "Выполнено")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Круговая диаграмма
+            Box(
+                modifier = Modifier.size(70.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    progress = { habitProgress },
+                    modifier = Modifier.fillMaxSize(),
+                    color = if (isCompleted)
+                        MaterialTheme.colorScheme.secondary
+                    else
+                        MaterialTheme.colorScheme.primary,
+                    strokeWidth = 6.dp,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
+                )
+                Text(
+                    text = "${goal.completedDates.size}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Информация
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = goal.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    textDecoration = if (isCompleted) TextDecoration.LineThrough else null
+                )
+                Text(
+                    text = "Выполнено: ${goal.completedDates.size} / 30 дней",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                if (!isCompleted) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { onToggle(!isDoneToday) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isDoneToday
+                    ) {
+                        Text(if (!isDoneToday) "Отметить сегодня" else "Выполнено сегодня")
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun OneTimeGoalCard(goal: Goal.OneTimeGoal, onToggle: (Boolean) -> Unit) {
-    Row(
+fun OneTimeGoalCard(
+    goal: Goal.OneTimeGoal,
+    onToggle: (Boolean) -> Unit,
+    isCompleted: Boolean
+) {
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            goal.title,
+            text = goal.title,
             style = MaterialTheme.typography.titleMedium,
-            textDecoration = if (goal.isDone) TextDecoration.LineThrough else null
+            textDecoration = if (goal.isDone) TextDecoration.LineThrough else null,
+            modifier = Modifier.align(Alignment.Start)
         )
-        Checkbox(checked = goal.isDone, onCheckedChange = onToggle)
+        Spacer(modifier = Modifier.height(12.dp))
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            if (isCompleted) {
+                Button(
+                    onClick = { onToggle(false) }
+                ) {
+                    Text("Вернуть")
+                }
+            } else {
+                Button(
+                    onClick = { onToggle(true) }
+                ) {
+                    Text("Завершить")
+                }
+            }
+        }
+
     }
 }
 
