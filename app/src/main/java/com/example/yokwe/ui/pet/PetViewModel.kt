@@ -49,7 +49,6 @@ class PetViewModel @Inject constructor(
         newLevel: Int? = null
     ) {
         val currentPet = _state.value.pet ?: return
-        _state.update { it.copy(isThinking = true) }
 
         try {
             val message = aiRepository.generatePetMessage(
@@ -60,8 +59,8 @@ class PetViewModel @Inject constructor(
                 newLevel = newLevel
             )
             updateLastMessage(message)
-        } finally {
-            _state.update { it.copy(isThinking = false) }
+        } catch (e: Exception) {
+            updateLastMessage(e.message.toString())
         }
     }
 

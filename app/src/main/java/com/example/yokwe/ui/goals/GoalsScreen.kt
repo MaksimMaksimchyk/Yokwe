@@ -236,6 +236,7 @@ fun GoalCard(
                     isCompleted = isCompleted
                 )
             }
+
         }
 
         Row(
@@ -250,6 +251,7 @@ fun GoalCard(
                 )
             }
         }
+
     }
 }
 

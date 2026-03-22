@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.yokwe.domain.models.Goal
 import com.example.yokwe.domain.models.GoalStatus
 import com.example.yokwe.domain.models.PetEvent
+import com.example.yokwe.domain.models.PetEventBus
+import com.example.yokwe.domain.models.PetEventData
 import com.example.yokwe.domain.repositories.AiRepository
 import com.example.yokwe.domain.repositories.GoalRepository
 import com.example.yokwe.domain.repositories.PetRepository
@@ -31,7 +33,8 @@ class GoalsViewModel @Inject constructor(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val petRepository: PetRepository,
-    private val aiRepository: AiRepository
+    private val aiRepository: AiRepository,
+    private val eventBus: PetEventBus
 ) : ViewModel() {
     private val _state = MutableStateFlow(GoalsState())
     val state = _state.asStateFlow()
@@ -133,6 +136,29 @@ class GoalsViewModel @Inject constructor(
             }
             goalRepository.updateGoal(updatedGoal)
 
+            if (isCompleted) {
+                val userEmail = auth.currentUser?.email ?: "Пользователь"
+                val eventData = when (goal) {
+                    is Goal.OneTimeGoal -> PetEventData(
+                        event = PetEvent.TASK_COMPLETED,
+                        taskName = goal.title,
+                        userId = auth.currentUser?.uid,
+                        userEmail = userEmail
+                    )
+                    is Goal.DailyHabitGoal -> PetEventData(
+                        event = PetEvent.HABIT_COMPLETED,
+                        taskName = goal.title,
+                        userId = auth.currentUser?.uid,
+                        userEmail = userEmail
+                    )
+                    else -> null
+                }
+                eventData?.let {
+                    println("🔥 Отправляем событие: ${it.event}")
+                    eventBus.sendEvent(it)
+                }
+            }
+
             // Добавляем опыт питомцу
             if (isCompleted) {
                 familyId?.let { id ->
@@ -167,6 +193,7 @@ class GoalsViewModel @Inject constructor(
                 }
             }
 
+
             _state.update { state ->
                 state.copy(goals = state.goals.map { if (it.id == goalId) updatedGoal else it })
             }
@@ -187,6 +214,21 @@ class GoalsViewModel @Inject constructor(
                 status = newStatus
             )
             goalRepository.updateGoal(updatedGoal)
+
+            //Отправить ивент
+            val userEmail = auth.currentUser?.email ?: "Пользователь"
+            val eventData = PetEventData(
+                event = if (wasCompleted) PetEvent.GOAL_REACHED else PetEvent.ADDED_PROGRESS,
+                goalName = goal.title,
+                amount = amount,
+                userId = auth.currentUser?.uid,
+                userEmail = userEmail
+            )
+            eventData.let {
+                println("🔥 Отправляем событие: ${it.event}")
+                eventBus.sendEvent(it)
+            }
+
 
             // Добавляем опыт питомцу
             familyId?.let { id ->
