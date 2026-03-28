@@ -1,7 +1,10 @@
-package com.example.yokwe.data.remote
+package com.example.yokwe.data.ai
 
 
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.Header
+import retrofit2.http.Headers
+import retrofit2.http.POST
 
 interface OpenRouterService {
     @POST("chat/completions")

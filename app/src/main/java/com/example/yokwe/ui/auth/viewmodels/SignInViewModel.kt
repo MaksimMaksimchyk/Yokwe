@@ -1,8 +1,10 @@
-package com.example.yokwe.ui.auth
+package com.example.yokwe.ui.auth.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.yokwe.domain.repositories.AuthRepository
+import com.example.yokwe.domain.interactors.FamilyInteractor
+import com.example.yokwe.ui.auth.intents.SignInIntent
+import com.example.yokwe.ui.auth.states.SignInState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SignInViewModel @Inject constructor(private val authRepository: AuthRepository) :
+class SignInViewModel @Inject constructor(private val familyInteractor: FamilyInteractor) :
     ViewModel() {
     private val _state = MutableStateFlow(SignInState())
     val state = _state.asStateFlow()
@@ -28,8 +30,8 @@ class SignInViewModel @Inject constructor(private val authRepository: AuthReposi
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             try {
-                val familyId = authRepository.signIn(_state.value.email, _state.value.password)
-                _state.update { it.copy(isLoading = false, isSuccess = true, familyId = familyId) }
+                familyInteractor.signIn(_state.value.email, _state.value.password)
+                _state.update { it.copy(isLoading = false, isSuccess = true) }
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false, error = e.message ?: "Ошибка входа") }
             } finally {

@@ -2,10 +2,10 @@ package com.example.yokwe.data.repositories
 
 import android.util.Log
 import com.example.yokwe.BuildConfig
-import com.example.yokwe.data.remote.ChatRequest
-import com.example.yokwe.data.remote.Message
-import com.example.yokwe.data.remote.OpenRouterService
-import com.example.yokwe.domain.models.PetEvent
+import com.example.yokwe.data.ai.ChatRequest
+import com.example.yokwe.data.ai.Message
+import com.example.yokwe.data.ai.OpenRouterService
+import com.example.yokwe.domain.models.PetEvents
 import com.example.yokwe.domain.repositories.AiRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,19 +18,16 @@ class AiRepositoryImpl @Inject constructor(
 ) : AiRepository {
 
     init {
-        Log.d("AiRepository", "API Key loaded: ${BuildConfig.OPENROUTER_API_KEY.take(10)}...")
+        Log.d("AiRepository", "API Key loaded: ${BuildConfig.OPENROUTER_API_KEY.take(5)}...")
     }
-
     companion object {
-        private const val TIMEOUT_MS = 40000L // 40 секунд таймаут
+        private const val TIMEOUT_MS = 10000L // 10 секунд таймаут
     }
 
     override suspend fun generatePetMessage(
-        event: PetEvent,
+        event: PetEvents,
         petLevel: Int,
-        taskName: String?,
-        goalName: String?,
-        newLevel: Int?
+        goalName: String?
     ): String = withContext(Dispatchers.IO) {
         Log.d("AiRepository", "Starting generatePetMessage for event: $event")
 
@@ -39,7 +36,7 @@ class AiRepositoryImpl @Inject constructor(
                 Log.d("AiRepository", "Making API call...")
 
                 val systemPrompt = getSystemPrompt(petLevel)
-                val userPrompt = getUserPrompt(event, taskName, goalName, newLevel)
+                val userPrompt = getUserPrompt(event, goalName)
 
                 Log.d("AiRepository", "System prompt: $systemPrompt")
                 Log.d("AiRepository", "User prompt: $userPrompt")
@@ -49,7 +46,7 @@ class AiRepositoryImpl @Inject constructor(
                         Message("system", systemPrompt),
                         Message("user", userPrompt)
                     ),
-                    maxTokens = 100
+                    maxTokens = 200
                 )
                 Log.d(
                     "AiRepository",
@@ -68,7 +65,7 @@ class AiRepositoryImpl @Inject constructor(
             }
         }
 
-        result ?: getFallbackMessage(event, taskName, goalName, newLevel)
+        result ?: getFallbackMessage()
     }
 
     private fun getSystemPrompt(level: Int): String {
@@ -82,13 +79,13 @@ class AiRepositoryImpl @Inject constructor(
             """.trimIndent()
 
             in 4..6 -> """
-                Ты подросший питомец Yokwe. Ты поддерживаешь своих хозяев и даёшь простые советы.
+                Ты подросший питомец. Ты поддерживаешь своих хозяев и даёшь простые советы.
                 Твой тон дружелюбный и заботливый. Иногда можешь подшутить.
                 Отвечай коротко (2-4 предложения). Используй смайлики.
             """.trimIndent()
 
             else -> """
-                Ты мудрый питомец Yokwe, прошедший с хозяевами долгий путь.
+                Ты мудрый питомец, прошедший с хозяевами долгий путь.
                 Ты даёшь глубокие советы, говоришь о важном.
                 Твои слова полны любви и поддержки. Отвечай не очень длинно (3-5 предложений).
             """.trimIndent()
@@ -96,81 +93,33 @@ class AiRepositoryImpl @Inject constructor(
     }
 
     private fun getUserPrompt(
-        event: PetEvent,
-        taskName: String?,
-        goalName: String?,
-        newLevel: Int?
+        event: PetEvents,
+        goalName: String?
     ): String {
         return when (event) {
-            PetEvent.TASK_COMPLETED -> {
-                "Мои хозяева только что выполнили задачу${if (taskName != null) " '$taskName'" else ""}! Что скажешь?"
+            PetEvents.TASK_COMPLETED -> {
+                "Мои хозяева только что выполнили задачу ${goalName}! Что скажешь?"
             }
 
-            PetEvent.TASK_MISSED -> {
-                "Мои хозяева забыли выполнить задачу${if (taskName != null) " '$taskName'" else ""}. Как мягко напомнить им?"
+            PetEvents.FINANCIAL_GOAL_REACHED -> {
+                "Мои хозяева достигли цели ${goalName}! Поздравь их!"
             }
 
-            PetEvent.GOAL_REACHED -> {
-                "Мои хозяева достигли цели${if (goalName != null) " '$goalName'" else ""}! Поздравь их!"
+            PetEvents.ADDED_PROGRESS -> {
+                "Хозяева добавили прогресс в финансовую цель ${goalName}. Подбодри их!"
             }
 
-            PetEvent.LEVEL_UP -> {
-                "Я только что повысил уровень до $newLevel! Что сказать хозяевам?"
+            PetEvents.HABIT_COMPLETED -> {
+                "Хозяева выполнили привычку ${goalName}. Похвали их!"
             }
 
-            PetEvent.ADDED_PROGRESS -> {
-                "Хозяева добавили прогресс в финансовую цель${if (goalName != null) " '$goalName'" else ""}. Подбодри их!"
-            }
-
-            PetEvent.HABIT_COMPLETED -> {
-                "Хозяева выполнили привычку${if (taskName != null) " '$taskName'" else ""}. Похвали их!"
+            PetEvents.GOAL_ADDED -> {
+                "Пользователь добавил задачу ${goalName}. Что ты можешь ему посоветовать? "
             }
         }
     }
 
-    private fun getFallbackMessage(
-        event: PetEvent,
-        taskName: String?,
-        goalName: String?,
-        newLevel: Int?
-    ): String {
-        val fallbacks = when (event) {
-            PetEvent.TASK_COMPLETED -> listOf(
-                "Ура! Задача выполнена! Так держать!",
-                "Отлично! Я горжусь тобой!",
-                "Ещё одна задача готова! Ты молодец!"
-            )
-
-            PetEvent.TASK_MISSED -> listOf(
-                "Не забывай про задачи! Мы верим в тебя!",
-                "Ничего страшного, в следующий раз обязательно получится!",
-                "Давай, ты сможешь! Начни с маленького шага!"
-            )
-
-            PetEvent.GOAL_REACHED -> listOf(
-                "Поздравляю с достижением цели! Это победа!",
-                "Цель достигнута! Вы невероятные!",
-                "Мечты сбываются! Продолжайте в том же духе!"
-            )
-
-            PetEvent.LEVEL_UP -> listOf(
-                "Ура! Я вырос до $newLevel уровня! Спасибо вам!",
-                "Йеее! Новый уровень! Продолжайте в том же духе!",
-                "Я становлюсь сильнее вместе с вами!"
-            )
-
-            PetEvent.ADDED_PROGRESS -> listOf(
-                "Ещё немного и цель будет достигнута!",
-                "Отлично! Вы приближаетесь к цели!",
-                "Каждый шаг приближает к мечте!"
-            )
-
-            PetEvent.HABIT_COMPLETED -> listOf(
-                "Отличная привычка! Так держать!",
-                "Ещё один день продуктивности!",
-                "Ты становишься лучше каждый день!"
-            )
-        }
-        return fallbacks.random()
+    private fun getFallbackMessage(): String {
+        return "Zzz..."
     }
 }

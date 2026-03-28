@@ -16,7 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,8 +41,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.yokwe.domain.models.Pet
-import com.example.yokwe.domain.models.PetEvent
-import com.example.yokwe.domain.models.PetEventData
 import com.example.yokwe.ui.pet.PetViewModel
 import com.google.firebase.auth.FirebaseAuth
 
@@ -110,7 +108,7 @@ fun HomeScreen(
                             }
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Logout,
+                                imageVector = Icons.AutoMirrored.Filled.Logout,
                                 contentDescription = "Выйти",
                                 tint = MaterialTheme.colorScheme.error
                             )
@@ -162,35 +160,35 @@ fun HomeScreen(
             }
 
             // Последнее событие (если есть)
-            if (homeState.lastEvent != null) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    ),
-                    elevation = CardDefaults.cardElevation(4.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "Последнее событие",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+            /*            if (homeState.lastEvent != null) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                elevation = CardDefaults.cardElevation(4.dp),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
+                                    Text(
+                                        text = "Последнее событие",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
 
-                        Text(
-                            text = getEventMessage(homeState.lastEvent!!),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                                    Text(
+                                        text = getEventMessage(homeState.lastEvent!!),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
 
-                    }
-                }
-            }
+                                }
+                            }
+                        }*/
 
         } else if (homeState.isLoading) {
             CircularProgressIndicator(modifier = Modifier.padding(16.dp))
@@ -279,7 +277,7 @@ fun PetCard(
                     .padding(12.dp)
             ) {
                 Text(
-                    text = "💬 ${pet.lastMessage}",
+                    text = pet.lastMessage,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -380,13 +378,3 @@ fun StatItem(
     }
 }
 
-fun getEventMessage(eventData: PetEventData): String {
-    return when (eventData.event) {
-        PetEvent.TASK_COMPLETED -> "${eventData.userEmail ?: "Кто-то"} выполнил задачу '${eventData.taskName}'"
-        PetEvent.HABIT_COMPLETED -> "${eventData.userEmail ?: "Кто-то"} сегодня сделал привычку '${eventData.taskName}'"
-        PetEvent.GOAL_REACHED -> "${eventData.userEmail ?: "Кто-то"} достиг цели '${eventData.goalName}'!"
-        PetEvent.ADDED_PROGRESS -> "${eventData.userEmail ?: "Кто-то"} внёс $${eventData.amount} на цель '${eventData.goalName}'"
-        PetEvent.LEVEL_UP -> "${eventData.userEmail ?: "Кто-то"} повысил уровень питомца до ${eventData.newLevel}!"
-        PetEvent.TASK_MISSED -> "${eventData.userEmail ?: "Кто-то"} пропустил задачу '${eventData.goalName}'!"
-    }
-}

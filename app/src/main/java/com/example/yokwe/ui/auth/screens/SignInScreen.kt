@@ -1,4 +1,4 @@
-package com.example.yokwe.ui.auth
+package com.example.yokwe.ui.auth.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,10 +18,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.yokwe.ui.auth.viewmodels.SignInViewModel
+import com.example.yokwe.ui.auth.intents.SignInIntent
 
 @Composable
 fun SignInScreen(

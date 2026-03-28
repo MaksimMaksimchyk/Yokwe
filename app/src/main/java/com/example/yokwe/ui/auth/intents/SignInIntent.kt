@@ -1,4 +1,4 @@
-package com.example.yokwe.ui.auth
+package com.example.yokwe.ui.auth.intents
 
 sealed class SignInIntent {
     data class EnterEmail(val email: String) : SignInIntent()

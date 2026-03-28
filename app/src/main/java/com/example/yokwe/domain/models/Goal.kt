@@ -8,6 +8,7 @@ sealed class Goal {
     abstract val createdBy: String
     abstract val createdAt: Date
     abstract val status: GoalStatus
+    abstract val title: String
 
     data class FinancialGoal(
         override val id: String,
@@ -15,7 +16,7 @@ sealed class Goal {
         override val createdBy: String,
         override val createdAt: Date,
         override val status: GoalStatus,
-        val title: String,
+        override val title: String,
         val targetAmount: Double,
         val currentAmount: Double,
         val currency: String = "USD"
@@ -27,7 +28,7 @@ sealed class Goal {
         override val createdBy: String,
         override val createdAt: Date,
         override val status: GoalStatus,
-        val title: String,
+        override val title: String,
         val completedDates: List<Date> = emptyList()
     ) : Goal()
 
@@ -37,11 +38,11 @@ sealed class Goal {
         override val createdBy: String,
         override val createdAt: Date,
         override val status: GoalStatus,
-        val title: String,
+        override val title: String,
         val isDone: Boolean = false
     ) : Goal()
 }
 
 enum class GoalStatus {
-    ACTIVE, COMPLETED, FAILED
+    ACTIVE, COMPLETED
 }

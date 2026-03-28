@@ -4,10 +4,10 @@ import com.example.yokwe.domain.models.Goal
 import com.example.yokwe.ui.goals.GoalStats
 import kotlinx.coroutines.flow.Flow
 
-interface GoalRepository {
+interface GoalsRepository {
     suspend fun addGoal(goal: Goal)
     suspend fun updateGoal(goal: Goal)
     suspend fun deleteGoal(goalId: String)
-    fun observeGoals(familyId: String): Flow<List<Goal>>
-    fun observeGoalStats(familyId: String): Flow<GoalStats>
+    fun getGoalsFlow(familyId: String): Flow<List<Goal>>
+    fun getGoalsStatsFlow(familyId: String): Flow<GoalStats>
 }

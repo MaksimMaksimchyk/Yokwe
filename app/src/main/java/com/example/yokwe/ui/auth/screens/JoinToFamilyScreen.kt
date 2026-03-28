@@ -1,5 +1,6 @@
-package com.example.yokwe.ui.auth
+package com.example.yokwe.ui.auth.screens
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,7 +14,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.yokwe.ui.auth.viewmodels.JoinToFamilyViewModel
+import com.example.yokwe.ui.auth.intents.JoinToFamilyIntent
 
 @Composable
 fun JoinToFamilyScreen(
@@ -31,17 +33,12 @@ fun JoinToFamilyScreen(
 
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(state.isSuccess, state.familyId) {
-        if (state.isSuccess && state.familyId.isNotBlank()) {
-            viewModel.handleIntent(JoinToFamilyIntent.NavigateToMain)
-        }
-    }
-
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Text("Присоединиться к семье", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(32.dp))

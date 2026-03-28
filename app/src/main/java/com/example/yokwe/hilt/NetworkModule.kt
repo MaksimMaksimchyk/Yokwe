@@ -1,6 +1,6 @@
 package com.example.yokwe.hilt
 
-import com.example.yokwe.data.remote.OpenRouterService
+import com.example.yokwe.data.ai.OpenRouterService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

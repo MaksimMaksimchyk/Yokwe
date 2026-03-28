@@ -54,7 +54,6 @@ class PetRepositoryImpl @Inject constructor(
                     familyId = familyId,
                     level = newLevel,
                     experience = newExperience,
-                    mood = petDto.mood,
                     lastMessage = petDto.lastMessage
                 )
 
@@ -68,18 +67,6 @@ class PetRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateMood(familyId: String, mood: String): Result<Pet> {
-        return try {
-            val petRef = firestore.collection("pets").document(familyId)
-            petRef.update("mood", mood).await()
-
-            val snapshot = petRef.get().await()
-            val pet = snapshot.toObject(PetDTO::class.java)?.toDomain()
-            Result.success(pet ?: throw Exception("Pet not found"))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 
     override suspend fun updateLastMessage(familyId: String, message: String): Result<Pet> {
         return try {
@@ -92,5 +79,26 @@ class PetRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun updateLastEvent(familyId: String, event: String): Result<Pet> {
+        return try {
+            val petRef = firestore.collection("pets").document(familyId)
+            petRef.update("lastEvent", event).await()
+
+            val snapshot = petRef.get().await()
+            val pet = snapshot.toObject(PetDTO::class.java)?.toDomain()
+            Result.success(pet ?: throw Exception("Pet not found"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getCurrentPetLevel(familyId: String): Int {
+        val petRef = firestore.collection("pets").document(familyId)
+        val petDoc = petRef.get().await()
+        val petLevel = petDoc.getLong("level")?.toInt() ?: 1
+
+        return petLevel
     }
 }

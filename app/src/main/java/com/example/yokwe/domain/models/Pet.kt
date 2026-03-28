@@ -4,8 +4,8 @@ data class Pet(
     val familyId: String,
     var level: Int,
     var experience: Int,
-    var mood: PetMood,
-    var lastMessage: String = "Привет! Я ваш общий питомец!"
+    var lastMessage: String,
+    val lastEvent: String
 ) {
     val maxExperience: Int
         get() = 100 * level

@@ -1,4 +1,4 @@
-package com.example.yokwe.ui.auth
+package com.example.yokwe.ui.auth.states
 
 sealed class AuthState {
     object Loading : AuthState()

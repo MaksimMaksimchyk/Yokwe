@@ -4,7 +4,7 @@ import com.example.yokwe.data.dto.GoalDTO
 import com.example.yokwe.data.mappers.toDomain
 import com.example.yokwe.data.mappers.toDto
 import com.example.yokwe.domain.models.Goal
-import com.example.yokwe.domain.repositories.GoalRepository
+import com.example.yokwe.domain.repositories.GoalsRepository
 import com.example.yokwe.ui.goals.GoalStats
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -14,9 +14,9 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-class GoalRepositoryImpl @Inject constructor(
+class GoalsRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore
-) : GoalRepository {
+) : GoalsRepository {
 
     override suspend fun addGoal(goal: Goal) {
         val dto = goal.toDto().copy(id = "") // id будет присвоен через Firestore
@@ -33,7 +33,7 @@ class GoalRepositoryImpl @Inject constructor(
         firestore.collection("goals").document(goalId).delete().await()
     }
 
-    override fun observeGoals(familyId: String): Flow<List<Goal>> = callbackFlow {
+    override fun getGoalsFlow(familyId: String): Flow<List<Goal>> = callbackFlow {
         val snapshotListener = firestore.collection("goals")
             .whereEqualTo("familyId", familyId)
             .orderBy("createdAt", Query.Direction.DESCENDING)
@@ -50,7 +50,7 @@ class GoalRepositoryImpl @Inject constructor(
         awaitClose { snapshotListener.remove() }
     }
 
-    override fun observeGoalStats(familyId: String): Flow<GoalStats> = callbackFlow {
+    override fun getGoalsStatsFlow(familyId: String): Flow<GoalStats> = callbackFlow {
         val snapshotListener = firestore.collection("goals")
             .whereEqualTo("familyId", familyId)
             .addSnapshotListener { snapshot, error ->

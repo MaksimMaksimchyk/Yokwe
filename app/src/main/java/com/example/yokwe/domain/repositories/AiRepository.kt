@@ -1,13 +1,11 @@
 package com.example.yokwe.domain.repositories
 
-import com.example.yokwe.domain.models.PetEvent
+import com.example.yokwe.domain.models.PetEvents
 
 interface AiRepository {
     suspend fun generatePetMessage(
-        event: PetEvent,
+        event: PetEvents,
         petLevel: Int,
-        taskName: String? = null,
-        goalName: String? = null,
-        newLevel: Int? = null
+        goalName: String? = null
     ): String
 }

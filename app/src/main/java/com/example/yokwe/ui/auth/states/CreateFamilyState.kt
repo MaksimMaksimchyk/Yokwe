@@ -1,10 +1,8 @@
-package com.example.yokwe.ui.auth
+package com.example.yokwe.ui.auth.states
 
-data class SignInState (
+data class CreateFamilyState(
     val email: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
-    val isSuccess: Boolean = false,
-    val familyId: String = "",
     val error: String? = null
 )

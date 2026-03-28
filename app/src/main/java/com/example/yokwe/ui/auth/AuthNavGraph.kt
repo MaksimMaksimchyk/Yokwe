@@ -5,6 +5,10 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.yokwe.ui.auth.screens.AuthSelectionScreen
+import com.example.yokwe.ui.auth.screens.CreateFamilyScreen
+import com.example.yokwe.ui.auth.screens.JoinToFamilyScreen
+import com.example.yokwe.ui.auth.screens.SignInScreen
 
 @Composable
 fun AuthNavGraph(

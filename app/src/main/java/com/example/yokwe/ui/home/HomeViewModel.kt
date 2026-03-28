@@ -2,10 +2,7 @@ package com.example.yokwe.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.yokwe.data.dto.GoalDTO
-import com.example.yokwe.domain.models.PetEventBus
-import com.example.yokwe.domain.repositories.GoalRepository
-import com.example.yokwe.ui.goals.GoalStats
+import com.example.yokwe.domain.repositories.GoalsRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,21 +19,10 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val goalRepository: GoalRepository,
-    private val eventBus: PetEventBus
+    private val goalsRepository: GoalsRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeScreenState())
     val state: StateFlow<HomeScreenState> = _state.asStateFlow()
-
-    init {
-        // Подписываемся на события питомца
-        viewModelScope.launch {
-            eventBus.lastEvent.collect { eventData ->
-                println("📢 HomeViewModel получил событие: ${eventData?.event}")
-                _state.update { it.copy(lastEvent = eventData) }
-            }
-        }
-    }
 
 
     fun loadFamilyInfo(familyId: String) {
@@ -61,7 +47,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun observeGoalStats(familyId: String) {
-        goalRepository.observeGoalStats(familyId)
+        goalsRepository.getGoalsStatsFlow(familyId)
             .catch { e ->
                 _state.update { it.copy(error = e.message) }
             }

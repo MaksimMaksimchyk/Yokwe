@@ -1,4 +1,4 @@
-package com.example.yokwe.ui.auth
+package com.example.yokwe.ui.auth.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

@@ -1,4 +1,4 @@
-package com.example.yokwe.ui.auth
+package com.example.yokwe.ui.auth.states
 
 data class JoinToFamilyState(
     val email: String = "",
@@ -6,6 +6,5 @@ data class JoinToFamilyState(
     val inviteCode: String = "",
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
-    val familyId: String = "",
     val error: String? = null
 )
