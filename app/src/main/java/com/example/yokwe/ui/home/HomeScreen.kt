@@ -73,63 +73,14 @@ fun HomeScreen(
         verticalArrangement = Arrangement.Top
     ) {
         Text(
-            text = "Добро пожаловать!",
-            style = MaterialTheme.typography.headlineMedium
+            text = "Добро пожаловать, ${currentUser?.email ?: "неизвестный пользователь"}!",
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Карточка питомца (оставляем как есть)
-        if (petState.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-        } else if (petState.error != null) {
-            Text(
-                text = "Ошибка загрузки питомца: ${petState.error}",
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(8.dp)
-            )
-        } else if (petState.pet != null) {
-            PetCard(
-                pet = petState.pet!!
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         // Блок "Семья" со статистикой, последним событием и кнопкой выхода
         if (!homeState.isLoading) {
-
-            // Последнее событие (если есть)
-            if (homeState.lastEvent != null) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    ),
-                    elevation = CardDefaults.cardElevation(4.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Последнее событие",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = getEventMessage(homeState.lastEvent!!),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                    }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -140,7 +91,7 @@ fun HomeScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(
@@ -165,15 +116,6 @@ fun HomeScreen(
                             )
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Email
-                    Text(
-                        text = "Email: ${currentUser?.email ?: "Неизвестно"}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.fillMaxWidth()
-                    )
 
                     // Участники
                     Text(
@@ -216,7 +158,40 @@ fun HomeScreen(
                         InviteCodeBanner(inviteCode = homeState.inviteCode!!)
                     }
                 }
+
             }
+
+            // Последнее событие (если есть)
+            if (homeState.lastEvent != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Последнее событие",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = getEventMessage(homeState.lastEvent!!),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                    }
+                }
+            }
+
         } else if (homeState.isLoading) {
             CircularProgressIndicator(modifier = Modifier.padding(16.dp))
         } else if (homeState.error != null) {
@@ -226,6 +201,24 @@ fun HomeScreen(
                 modifier = Modifier.padding(8.dp)
             )
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Карточка питомца
+        if (petState.isLoading) {
+            CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+        } else if (petState.error != null) {
+            Text(
+                text = "Ошибка загрузки питомца: ${petState.error}",
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(8.dp)
+            )
+        } else if (petState.pet != null) {
+            PetCard(
+                pet = petState.pet!!
+            )
+        }
+
     }
 }
 
@@ -245,6 +238,14 @@ fun PetCard(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                text = "Безымянный питомец",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // Плейсхолдер изображения питомца
             Box(
                 modifier = Modifier
@@ -267,13 +268,24 @@ fun PetCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "Безымянный питомец",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
+            // Облачко с сообщением
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "💬 ${pet.lastMessage}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Уровень ${pet.level}",
@@ -298,25 +310,6 @@ fun PetCard(
                     color = MaterialTheme.colorScheme.secondary,
                     trackColor = ProgressIndicatorDefaults.linearTrackColor,
                     strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Облачко с сообщением
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = RoundedCornerShape(16.dp)
-                    )
-                    .padding(12.dp)
-            ) {
-                Text(
-                    text = "💬 ${pet.lastMessage}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
