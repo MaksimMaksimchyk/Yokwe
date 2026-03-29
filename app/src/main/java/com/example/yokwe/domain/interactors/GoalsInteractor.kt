@@ -101,6 +101,7 @@ class GoalsInteractor @Inject constructor(
         // Добавляем опыт питомцу и генерируем реплику
         if (isCompleted) {
             val familyId = familyRepository.getCurrentFamilyId()
+            val user = familyRepository.getCurrentUser()
 
             val expAmount = when (goal) {
                 is Goal.DailyHabitGoal -> HABIT_EXP_GAIN
@@ -112,12 +113,18 @@ class GoalsInteractor @Inject constructor(
                 is Goal.DailyHabitGoal -> PetEvents.HABIT_COMPLETED
                 is Goal.OneTimeGoal -> PetEvents.TASK_COMPLETED
             }
+
+            petRepository.updateLastEvent(
+                familyId = familyId,
+                "${user.email} выполнил задачу ${goal.title}"
+            )
             handlePetReaction(familyId = familyId, event = event, goalName = goal.title)
         }
 
     }
 
     suspend fun addMoney(goal: Goal.FinancialGoal, amount: Double) {
+        val user = familyRepository.getCurrentUser()
         val newCurrent = goal.currentAmount + amount
         val wasCompleted = newCurrent >= goal.targetAmount
         val newStatus = if (wasCompleted) GoalStatus.COMPLETED else GoalStatus.ACTIVE
@@ -131,6 +138,15 @@ class GoalsInteractor @Inject constructor(
             if (wasCompleted) COMPLETE_FINANCE_GOAL_EXP_GAIN else ADD_PROGRESS_FINANCE_GOAL_EXP_GAIN
         val familyId = familyRepository.getCurrentFamilyId()
         petRepository.addExperience(familyId, expAmount)
+
+        if (wasCompleted) {
+            petRepository.updateLastEvent(familyId, "${user.email} выполнил задачу ${goal.title}")
+        } else {
+            petRepository.updateLastEvent(
+                familyId,
+                "${user.email} добавил $${amount} на цель ${goal.title}"
+            )
+        }
 
         val event = if (wasCompleted) PetEvents.FINANCIAL_GOAL_REACHED else PetEvents.ADDED_PROGRESS
         handlePetReaction(familyId = familyId, event = event, goalName = goal.title)

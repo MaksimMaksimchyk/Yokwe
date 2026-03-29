@@ -221,33 +221,22 @@ fun GoalCard(
                 is Goal.FinancialGoal -> FinancialGoalCard(
                     goal = goal,
                     onAddProgress = onAddProgress,
-                    isCompleted = isCompleted
+                    isCompleted = isCompleted,
+                    onDelete = onDelete
                 )
 
                 is Goal.DailyHabitGoal -> DailyHabitGoalCard(
                     goal = goal,
                     onToggle = onToggle,
-                    isCompleted = isCompleted
+                    isCompleted = isCompleted,
+                    onDelete = onDelete
                 )
 
                 is Goal.OneTimeGoal -> OneTimeGoalCard(
                     goal = goal,
                     onToggle = onToggle,
-                    isCompleted = isCompleted
-                )
-            }
-
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Удалить",
-                    tint = MaterialTheme.colorScheme.error
+                    isCompleted = isCompleted,
+                    onDelete = onDelete
                 )
             }
         }
@@ -256,10 +245,22 @@ fun GoalCard(
 }
 
 @Composable
+fun DeleteButton(onDelete: () -> Unit) {
+    IconButton(onClick = onDelete) {
+        Icon(
+            imageVector = Icons.Default.Delete,
+            contentDescription = "Удалить",
+            tint = MaterialTheme.colorScheme.error
+        )
+    }
+}
+
+@Composable
 fun FinancialGoalCard(
     goal: Goal.FinancialGoal,
     onAddProgress: () -> Unit,
-    isCompleted: Boolean
+    isCompleted: Boolean,
+    onDelete: () -> Unit
 ) {
     val progress = (goal.currentAmount / goal.targetAmount).coerceIn(0.0, 1.0)
     val progressPercent = (progress * 100).toInt()
@@ -309,13 +310,15 @@ fun FinancialGoalCard(
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+
+            DeleteButton(onDelete = onDelete)
         }
 
         if (!isCompleted) {
             Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = onAddProgress,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
                 Text("Добавить сумму")
             }
@@ -327,7 +330,8 @@ fun FinancialGoalCard(
 fun DailyHabitGoalCard(
     goal: Goal.DailyHabitGoal,
     onToggle: (Boolean) -> Unit,
-    isCompleted: Boolean
+    isCompleted: Boolean,
+    onDelete: () -> Unit
 ) {
     val today = Date()
     val isDoneToday = goal.completedDates.any { isSameDay(it, today) }
@@ -362,7 +366,6 @@ fun DailyHabitGoalCard(
                     fontWeight = FontWeight.Bold
                 )
             }
-
             Spacer(modifier = Modifier.width(16.dp))
 
             // Информация
@@ -378,16 +381,19 @@ fun DailyHabitGoalCard(
                     text = "Выполнено: ${goal.completedDates.size} / 30 дней",
                     style = MaterialTheme.typography.bodySmall
                 )
-                if (!isCompleted) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { onToggle(!isDoneToday) },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isDoneToday
-                    ) {
-                        Text(if (!isDoneToday) "Отметить сегодня" else "Выполнено сегодня")
-                    }
-                }
+            }
+
+            DeleteButton(onDelete = onDelete)
+        }
+
+        if (!isCompleted) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = { onToggle(!isDoneToday) },
+                enabled = !isDoneToday,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text(if (!isDoneToday) "Отметить сегодня" else "Выполнено сегодня")
             }
         }
     }
@@ -397,32 +403,42 @@ fun DailyHabitGoalCard(
 fun OneTimeGoalCard(
     goal: Goal.OneTimeGoal,
     onToggle: (Boolean) -> Unit,
-    isCompleted: Boolean
+    isCompleted: Boolean,
+    onDelete: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = goal.title,
-            style = MaterialTheme.typography.titleMedium,
-            textDecoration = if (goal.isDone) TextDecoration.LineThrough else null,
-            modifier = Modifier.align(Alignment.Start)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = goal.title,
+                style = MaterialTheme.typography.titleMedium,
+                textDecoration = if (goal.isDone) TextDecoration.LineThrough else null,
+                textAlign = TextAlign.Start
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            DeleteButton(onDelete = onDelete)
+        }
+
         Spacer(modifier = Modifier.height(12.dp))
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            if (isCompleted) {
-                Button(
-                    onClick = { onToggle(false) }
-                ) {
-                    Text("Вернуть")
-                }
-            } else {
-                Button(
-                    onClick = { onToggle(true) }
-                ) {
-                    Text("Завершить")
-                }
+
+        if (isCompleted) {
+            Button(
+                onClick = { onToggle(false) },
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text("Вернуть")
+            }
+        } else {
+            Button(
+                onClick = { onToggle(true) },
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text("Завершить")
             }
         }
 

@@ -53,7 +53,6 @@ class GoalsViewModel @Inject constructor(
         }
     }
 
-
     fun handleIntent(intent: GoalsIntent) {
         when (intent) {
             is GoalsIntent.ToggleGoal -> toggleGoal(intent.goalId, intent.isCompleted)

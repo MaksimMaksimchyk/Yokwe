@@ -2,59 +2,55 @@ package com.example.yokwe.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.yokwe.domain.repositories.GoalsRepository
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.yokwe.domain.interactors.FamilyInteractor
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val firestore: FirebaseFirestore,
-    private val goalsRepository: GoalsRepository
+    private val familyInteractor: FamilyInteractor
 ) : ViewModel() {
-    private val _state = MutableStateFlow(HomeScreenState())
-    val state: StateFlow<HomeScreenState> = _state.asStateFlow()
 
+    private val familyIdFlow = MutableSharedFlow<String>(replay = 1)
 
-    fun loadFamilyInfo(familyId: String) {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-            val familyDoc = firestore.collection("families")
-                .document(familyId)
-                .get()
-                .await()
-
-            val members = familyDoc.get("members") as? List<*> ?: emptyList<Any>()
-            val inviteCode = familyDoc.getString("inviteCode")
-
-            _state.update {
-                it.copy(
-                    membersCount = members.size,
-                    inviteCode = inviteCode,
-                    isLoading = false
-                )
-            }
+    val state: StateFlow<HomeScreenState> = familyIdFlow.flatMapLatest { familyId ->
+        combine(
+            familyInteractor.getFamilyFlow(familyId),
+            familyInteractor.getGoalsStatsFlow(familyId),
+            familyInteractor.getPetFlow(familyId)
+        ) { family, stats, pet ->
+            HomeScreenState(
+                membersCount = family.members.size,
+                inviteCode = family.inviteCode,
+                goalStats = stats,
+                pet = pet,
+                isLoading = false
+            )
+        }.onStart {
+            emit(HomeScreenState(isLoading = true))
+        }.catch { e ->
+            emit(HomeScreenState(error = e.message, isLoading = false))
         }
-    }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HomeScreenState(isLoading = true)
+    )
 
-    fun observeGoalStats(familyId: String) {
-        goalsRepository.getGoalsStatsFlow(familyId)
-            .catch { e ->
-                _state.update { it.copy(error = e.message) }
-            }
-            .onEach { stats ->
-                _state.update { it.copy(goalStats = stats) }
-            }
-            .launchIn(viewModelScope)
+    fun loadData(familyId: String) {
+        familyIdFlow.tryEmit(familyId)
     }
 
 }
+
+
+
+

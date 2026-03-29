@@ -1,4 +1,4 @@
-package com.example.yokwe.ui.goals
+package com.example.yokwe.domain.models
 
 data class GoalStats(
     val total: Int = 0,

@@ -3,10 +3,16 @@ package com.example.yokwe.data.repositories
 import com.example.yokwe.data.dto.FamilyDTO
 import com.example.yokwe.data.dto.PetDTO
 import com.example.yokwe.data.dto.UserDTO
+import com.example.yokwe.data.mappers.toDomain
+import com.example.yokwe.domain.models.Family
+import com.example.yokwe.domain.models.Pet
 import com.example.yokwe.domain.repositories.FamilyRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -100,6 +106,22 @@ class FamilyRepositoryImpl @Inject constructor(
         if (family.members.size >= MAX_FAMILY_SIZE) throw Exception("В семье уже есть 2 участника")
 
         return family
+    }
+
+    override fun getFamilyFlow(familyId: String): Flow<Family> = callbackFlow {
+        val snapshotListener = firestore.collection("families")
+            .document(familyId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val family = snapshot?.toObject(FamilyDTO::class.java)?.toDomain()
+                if (family != null) {
+                    trySend(family)
+                }
+            }
+        awaitClose { snapshotListener.remove() }
     }
 
     override suspend fun getCurrentFamilyId(): String {

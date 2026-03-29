@@ -1,4 +1,4 @@
-package com.example.yokwe.ui.home
+package com.example.yokwe.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -22,6 +22,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.yokwe.ui.goals.CreateGoalScreen
 import com.example.yokwe.ui.goals.GoalsScreen
+import com.example.yokwe.ui.home.HomeScreen
 
 @Composable
 fun HomeNavGraph(

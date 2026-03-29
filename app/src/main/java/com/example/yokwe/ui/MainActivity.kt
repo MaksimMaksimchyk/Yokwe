@@ -17,10 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.yokwe.ui.auth.AuthNavGraph
 import com.example.yokwe.ui.auth.states.AuthState
 import com.example.yokwe.ui.auth.viewmodels.AuthViewModel
-import com.example.yokwe.ui.home.HomeNavGraph
 import com.example.yokwe.ui.theme.YokweTheme
 import dagger.hilt.android.AndroidEntryPoint
 

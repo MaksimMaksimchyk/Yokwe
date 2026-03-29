@@ -40,26 +40,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.yokwe.domain.models.GoalStats
 import com.example.yokwe.domain.models.Pet
-import com.example.yokwe.ui.pet.PetViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
-    petViewModel: PetViewModel = hiltViewModel(),
     familyId: String
 ) {
     val homeState by homeViewModel.state.collectAsStateWithLifecycle()
-    val petState by petViewModel.state.collectAsStateWithLifecycle()
-    val currentUser = FirebaseAuth.getInstance().currentUser
     val scrollState = rememberScrollState()
 
     LaunchedEffect(familyId) {
-        homeViewModel.loadFamilyInfo(familyId)
-        homeViewModel.observeGoalStats(familyId)
-        petViewModel.loadPet(familyId)
+        homeViewModel.loadData(familyId)
     }
 
     Column(
@@ -71,15 +66,15 @@ fun HomeScreen(
         verticalArrangement = Arrangement.Top
     ) {
         Text(
-            text = "Добро пожаловать, ${currentUser?.email ?: "неизвестный пользователь"}!",
+            text = "Добро пожаловать, ${homeState.currentUserEmail ?: "неизвестный пользователь"}!",
             style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Блок "Семья" со статистикой, последним событием и кнопкой выхода
         if (!homeState.isLoading) {
 
+            // Блок "Семья" со статистикой
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -92,63 +87,11 @@ fun HomeScreen(
                     modifier = Modifier.padding(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Семья",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        IconButton(
-                            onClick = {
-                                FirebaseAuth.getInstance().signOut()
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Logout,
-                                contentDescription = "Выйти",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-
-                    // Участники
-                    Text(
-                        text = "Участников: ${homeState.membersCount}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
+                    //Инфо о семье
+                    FamilyInfo(homeState.membersCount)
 
                     // Статистика целей
-                    Text(
-                        text = "Статистика целей",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        StatItem(
-                            value = homeState.goalStats.total.toString(),
-                            label = "Всего"
-                        )
-                        StatItem(
-                            value = homeState.goalStats.active.toString(),
-                            label = "Активно"
-                        )
-                        StatItem(
-                            value = homeState.goalStats.completed.toString(),
-                            label = "Выполнено"
-                        )
-                    }
+                    GoalStatsCard(homeState.goalStats)
 
                     // Баннер с кодом приглашения (если в семье 1 участник)
                     if (homeState.membersCount == 1 && homeState.inviteCode != null) {
@@ -159,36 +102,11 @@ fun HomeScreen(
 
             }
 
-            // Последнее событие (если есть)
-            /*            if (homeState.lastEvent != null) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                ),
-                                elevation = CardDefaults.cardElevation(4.dp),
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(16.dp)
-                                ) {
-                                    Text(
-                                        text = "Последнее событие",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
+            //Последнее событие
+            LastEventCard(homeState.pet?.lastEvent ?: "Нет событий")
 
-                                    Text(
-                                        text = getEventMessage(homeState.lastEvent!!),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-
-                                }
-                            }
-                        }*/
+            //Карточка питомца
+            PetCard(pet = homeState.pet!!)
 
         } else if (homeState.isLoading) {
             CircularProgressIndicator(modifier = Modifier.padding(16.dp))
@@ -199,31 +117,49 @@ fun HomeScreen(
                 modifier = Modifier.padding(8.dp)
             )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Карточка питомца
-        if (petState.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-        } else if (petState.error != null) {
-            Text(
-                text = "Ошибка загрузки питомца: ${petState.error}",
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(8.dp)
-            )
-        } else if (petState.pet != null) {
-            PetCard(
-                pet = petState.pet!!
-            )
-        }
-
     }
 }
+
+
+@Composable
+fun FamilyInfo(membersCount: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Семья",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        IconButton(
+            onClick = {
+                FirebaseAuth.getInstance().signOut()
+            }
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Logout,
+                contentDescription = "Выйти",
+                tint = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+
+    // Участники
+    Text(
+        text = "Участников: $membersCount",
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
 
 @Composable
 fun PetCard(
     pet: Pet
 ) {
+    Spacer(modifier = Modifier.height(12.dp))
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -263,7 +199,6 @@ fun PetCard(
                     fontSize = 56.sp
                 )
             }
-
             Spacer(modifier = Modifier.height(8.dp))
 
             // Облачко с сообщением
@@ -359,6 +294,35 @@ fun InviteCodeBanner(inviteCode: String) {
 }
 
 @Composable
+fun GoalStatsCard(goalStats: GoalStats) {
+    Text(
+        text = "Статистика целей",
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        StatItem(
+            value = goalStats.total.toString(),
+            label = "Всего"
+        )
+        StatItem(
+            value = goalStats.active.toString(),
+            label = "Активно"
+        )
+        StatItem(
+            value = goalStats.completed.toString(),
+            label = "Выполнено"
+        )
+    }
+}
+
+
+@Composable
 fun StatItem(
     value: String,
     label: String
@@ -377,4 +341,39 @@ fun StatItem(
         )
     }
 }
+
+
+@Composable
+fun LastEventCard(lastEvent: String) {
+
+    Spacer(modifier = Modifier.height(16.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(4.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Последнее событие",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = lastEvent,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+
+
 

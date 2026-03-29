@@ -73,7 +73,11 @@ fun TypeSelectionStep(viewModel: CreateGoalViewModel) {
 
 @Composable
 fun DetailsStep(viewModel: CreateGoalViewModel, state: CreateGoalState) {
-    Column {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
         Text("Детали", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(

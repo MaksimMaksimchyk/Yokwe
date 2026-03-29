@@ -1,4 +1,4 @@
-package com.example.yokwe.ui.auth
+package com.example.yokwe.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

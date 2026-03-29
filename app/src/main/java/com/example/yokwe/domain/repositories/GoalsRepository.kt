@@ -1,7 +1,7 @@
 package com.example.yokwe.domain.repositories
 
 import com.example.yokwe.domain.models.Goal
-import com.example.yokwe.ui.goals.GoalStats
+import com.example.yokwe.domain.models.GoalStats
 import kotlinx.coroutines.flow.Flow
 
 interface GoalsRepository {

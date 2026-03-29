@@ -5,7 +5,7 @@ import com.example.yokwe.data.mappers.toDomain
 import com.example.yokwe.data.mappers.toDto
 import com.example.yokwe.domain.models.Goal
 import com.example.yokwe.domain.repositories.GoalsRepository
-import com.example.yokwe.ui.goals.GoalStats
+import com.example.yokwe.domain.models.GoalStats
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose

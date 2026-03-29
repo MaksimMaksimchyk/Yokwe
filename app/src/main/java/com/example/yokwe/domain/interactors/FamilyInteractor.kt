@@ -5,7 +5,7 @@ import com.example.yokwe.domain.models.Pet
 import com.example.yokwe.domain.repositories.FamilyRepository
 import com.example.yokwe.domain.repositories.GoalsRepository
 import com.example.yokwe.domain.repositories.PetRepository
-import com.example.yokwe.ui.goals.GoalStats
+import com.example.yokwe.domain.models.GoalStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -41,6 +41,9 @@ class FamilyInteractor @Inject constructor(
         return goalsRepository.getGoalsStatsFlow(familyId)
     }
 
+    fun getFamilyFlow(familyId: String): Flow<Family> {
+        return familyRepository.getFamilyFlow(familyId)
+    }
 
 
 }
