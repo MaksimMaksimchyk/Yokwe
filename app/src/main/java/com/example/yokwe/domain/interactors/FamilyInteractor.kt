@@ -1,13 +1,14 @@
 package com.example.yokwe.domain.interactors
 
 import com.example.yokwe.domain.models.Family
+import com.example.yokwe.domain.models.GoalStats
+import com.example.yokwe.domain.models.GoalStatus
 import com.example.yokwe.domain.models.Pet
 import com.example.yokwe.domain.repositories.FamilyRepository
 import com.example.yokwe.domain.repositories.GoalsRepository
 import com.example.yokwe.domain.repositories.PetRepository
-import com.example.yokwe.domain.models.GoalStats
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class FamilyInteractor @Inject constructor(
@@ -38,7 +39,13 @@ class FamilyInteractor @Inject constructor(
     }
 
     fun getGoalsStatsFlow(familyId: String): Flow<GoalStats> {
-        return goalsRepository.getGoalsStatsFlow(familyId)
+        return goalsRepository.getGoalsFlow(familyId).map { goals ->
+            val total = goals.size
+            val active = goals.count { it.status == GoalStatus.ACTIVE }
+            val completed = goals.count { it.status == GoalStatus.COMPLETED }
+
+            GoalStats(total, active, completed)
+        }
     }
 
     fun getFamilyFlow(familyId: String): Flow<Family> {

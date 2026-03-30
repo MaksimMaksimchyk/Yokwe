@@ -7,7 +7,11 @@ import com.example.yokwe.domain.repositories.AiRepository
 import com.example.yokwe.domain.repositories.FamilyRepository
 import com.example.yokwe.domain.repositories.GoalsRepository
 import com.example.yokwe.domain.repositories.PetRepository
+import com.example.yokwe.hilt.ApplicationScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
 import javax.inject.Inject
@@ -16,8 +20,11 @@ class GoalsInteractor @Inject constructor(
     private val familyRepository: FamilyRepository,
     private val petRepository: PetRepository,
     private val goalsRepository: GoalsRepository,
-    private val aiRepository: AiRepository
+    private val aiRepository: AiRepository,
+    @ApplicationScope private val applicationScope: CoroutineScope
 ) {
+
+    private var petReactionJob: Job? = null
 
     companion object {
         const val HABIT_EXP_GAIN = 10
@@ -168,10 +175,14 @@ class GoalsInteractor @Inject constructor(
                 cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
     }
 
-    private suspend fun handlePetReaction(familyId: String, event: PetEvents, goalName: String) {
-        val level = petRepository.getCurrentPetLevel(familyId)
-        val message = aiRepository.generatePetMessage(event, level, goalName)
-        petRepository.updateLastMessage(familyId, message)
+    private fun handlePetReaction(familyId: String, event: PetEvents, goalName: String) {
+        petReactionJob?.cancel()
+        petReactionJob = applicationScope.launch {
+            val level = petRepository.getCurrentPetLevel(familyId)
+            petRepository.updateLastMessage(familyId, "Думаю...")
+            val message = aiRepository.generatePetMessage(event, level, goalName)
+            petRepository.updateLastMessage(familyId, message)
+        }
     }
 
 }

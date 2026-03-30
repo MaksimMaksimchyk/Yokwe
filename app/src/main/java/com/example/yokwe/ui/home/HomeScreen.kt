@@ -30,6 +30,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -43,6 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.yokwe.domain.models.GoalStats
 import com.example.yokwe.domain.models.Pet
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -211,12 +215,7 @@ fun PetCard(
                     )
                     .padding(12.dp)
             ) {
-                Text(
-                    text = pet.lastMessage,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                AnimatedPetMessage(pet.lastMessage, 15L)
             }
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -374,6 +373,27 @@ fun LastEventCard(lastEvent: String) {
     }
 }
 
+@Composable
+fun AnimatedPetMessage(message: String, charsDelay: Long) {
+
+    var visibleMessage by remember(message) { mutableStateOf("") }
+
+    LaunchedEffect(message) {
+        visibleMessage = ""
+        message.forEach { char ->
+            visibleMessage += char
+            delay(charsDelay)
+        }
+    }
+
+    Text(
+        text = visibleMessage,
+        style = MaterialTheme.typography.bodyMedium,
+        textAlign = TextAlign.Start,
+        modifier = Modifier.fillMaxWidth()
+    )
+
+}
 
 
 

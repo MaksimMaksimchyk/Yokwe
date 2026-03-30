@@ -50,25 +50,4 @@ class GoalsRepositoryImpl @Inject constructor(
         awaitClose { snapshotListener.remove() }
     }
 
-    override fun getGoalsStatsFlow(familyId: String): Flow<GoalStats> = callbackFlow {
-        val snapshotListener = firestore.collection("goals")
-            .whereEqualTo("familyId", familyId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-
-                val goals = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(GoalDTO::class.java)
-                } ?: emptyList()
-
-                val total = goals.size
-                val active = goals.count { it.status == "ACTIVE" }
-                val completed = goals.count { it.status == "COMPLETED" }
-
-                trySend(GoalStats(total, active, completed))
-            }
-        awaitClose { snapshotListener.remove() }
-    }
 }

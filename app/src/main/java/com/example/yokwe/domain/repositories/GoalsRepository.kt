@@ -9,5 +9,4 @@ interface GoalsRepository {
     suspend fun updateGoal(goal: Goal)
     suspend fun deleteGoal(goalId: String)
     fun getGoalsFlow(familyId: String): Flow<List<Goal>>
-    fun getGoalsStatsFlow(familyId: String): Flow<GoalStats>
 }
