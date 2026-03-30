@@ -16,7 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.SettingsBackupRestore
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -216,7 +220,7 @@ fun GoalCard(
                 MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(modifier = Modifier.padding(all = 16.dp)) {
+        Column(modifier = Modifier.padding(top = 12.dp, start = 12.dp, end = 12.dp)) {
             when (goal) {
                 is Goal.FinancialGoal -> FinancialGoalCard(
                     goal = goal,
@@ -310,17 +314,28 @@ fun FinancialGoalCard(
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
-
-            DeleteButton(onDelete = onDelete)
         }
 
-        if (!isCompleted) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Button(
-                onClick = onAddProgress,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Spacer(modifier = Modifier.weight(1f))
+            IconButton(
+                enabled = !isCompleted,
+                onClick =  onAddProgress
             ) {
-                Text("Добавить сумму")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Добавить сумму",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                DeleteButton(onDelete = onDelete)
             }
         }
     }
@@ -382,18 +397,28 @@ fun DailyHabitGoalCard(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-
-            DeleteButton(onDelete = onDelete)
         }
 
-        if (!isCompleted) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = { onToggle(!isDoneToday) },
-                enabled = !isDoneToday,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Spacer(modifier = Modifier.weight(1f))
+            IconButton(
+                onClick = { onToggle(!isDoneToday) }
             ) {
-                Text(if (!isDoneToday) "Отметить сегодня" else "Выполнено сегодня")
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    modifier = Modifier.alpha(if (isDoneToday) 1f else 0.3f),
+                    contentDescription = "Отметить сегодня",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                DeleteButton(onDelete = onDelete)
             }
         }
     }
@@ -421,27 +446,44 @@ fun OneTimeGoalCard(
                 textAlign = TextAlign.Start
             )
             Spacer(modifier = Modifier.weight(1f))
-            DeleteButton(onDelete = onDelete)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        if (isCompleted) {
-            Button(
-                onClick = { onToggle(false) },
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                Text("Вернуть")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Spacer(modifier = Modifier.weight(1f))
+            if (isCompleted) {
+                IconButton(
+                    onClick = { onToggle(false) }
+
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SettingsBackupRestore,
+                        contentDescription = "Отменить выполнение",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            } else {
+                IconButton(
+                    onClick = { onToggle(true) }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Выполнить",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
-        } else {
-            Button(
-                onClick = { onToggle(true) },
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.CenterEnd
             ) {
-                Text("Завершить")
+                DeleteButton(onDelete = onDelete)
             }
         }
-
     }
 }
 
