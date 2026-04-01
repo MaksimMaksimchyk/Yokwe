@@ -40,7 +40,7 @@ fun JoinToFamilyScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Присоединиться к семье", style = MaterialTheme.typography.headlineMedium)
+        Text(text = "Присоединиться к семье", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(32.dp))
 
         //Поле для инвайт кода

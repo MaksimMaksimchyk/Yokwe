@@ -5,7 +5,6 @@ import com.example.yokwe.data.dto.PetDTO
 import com.example.yokwe.data.dto.UserDTO
 import com.example.yokwe.data.mappers.toDomain
 import com.example.yokwe.domain.models.Family
-import com.example.yokwe.domain.models.Pet
 import com.example.yokwe.domain.repositories.FamilyRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -59,13 +58,14 @@ class FamilyRepositoryImpl @Inject constructor(
         password: String,
         inviteCode: String
     ): String {
-        //Новый пользователь
-        val authResult = auth.createUserWithEmailAndPassword(email, password).await()
-        val newUserId = authResult.user?.uid ?: throw Exception("Auth failed")
-
         //Поиск семьи по коду:
         val family = searchFamily(inviteCode)
         val familyId = family.id
+        if (family.members.size >= MAX_FAMILY_SIZE) throw Exception("В семье уже есть 2 участника")
+
+        //Новый пользователь
+        val authResult = auth.createUserWithEmailAndPassword(email, password).await()
+        val newUserId = authResult.user?.uid ?: throw Exception("Auth failed")
 
         // Ссылки на документы фаерстор
         val userRef = firestore.collection("users").document(newUserId)
@@ -103,7 +103,6 @@ class FamilyRepositoryImpl @Inject constructor(
 
         val family = familyDoc.toObject(FamilyDTO::class.java)?.copy(id = familyDoc.id)
             ?: throw Exception("Ошибка чтения данных о семье из БД")
-        if (family.members.size >= MAX_FAMILY_SIZE) throw Exception("В семье уже есть 2 участника")
 
         return family
     }
