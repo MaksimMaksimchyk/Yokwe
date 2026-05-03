@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "460072665474",
+    "project_id": "yokwe-992be",
+    "storage_bucket": "yokwe-992be.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:460072665474:android:b0ad3994b8da300d388f9b",
+        "android_client_info": {
+          "package_name": "com.example.yokwe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgrbIuQoaRkCGsdZwKmr0D6R6KNnA3c0M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
